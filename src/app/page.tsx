@@ -1,101 +1,320 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useRef, useEffect, FormEvent } from "react";
+import { Monitor } from "lucide-react";
 
-export default function Home() {
+type Command = {
+  description: string;
+  systemCalls: string[];
+  execute: (args: string[]) => string;
+};
+
+const commands: Record<string, Command> = {
+  help: {
+    description: "Show available commands",
+    systemCalls: ["read()", "write()", "ioctl()"],
+    execute: () =>
+      Object.entries(commands)
+        .map(([cmd, info]) => `${cmd} - ${info.description}`)
+        .join("\n"),
+  },
+  ls: {
+    description: "List directory contents",
+    systemCalls: ["getdents()", "read()", "opendir()"],
+    execute: () => "Documents  Downloads  Pictures  Music  Videos",
+  },
+  pwd: {
+    description: "Print working directory",
+    systemCalls: ["getcwd()", "write()"],
+    execute: () => "/home/user",
+  },
+  echo: {
+    description: "Display a line of text",
+    systemCalls: ["write()", "printf()"],
+    execute: (args) => args.slice(1).join(" "),
+  },
+  date: {
+    description: "Display current date and time",
+    systemCalls: ["time()", "gettimeofday()"],
+    execute: () => new Date().toString(),
+  },
+  clear: {
+    description: "Clear terminal screen",
+    systemCalls: ["ioctl(TIOCGWINSZ)"],
+    execute: () => "",
+  },
+  whoami: {
+    description: "Print current user",
+    systemCalls: ["getuid()", "getpwuid()"],
+    execute: () => "user",
+  },
+  uname: {
+    description: "Print system information",
+    systemCalls: ["uname()"],
+    execute: () => "Linux WebContainer 5.15.0-1053-azure",
+  },
+  ps: {
+    description: "Report process status",
+    systemCalls: ["fork()", "exec()", "wait()"],
+    execute: () =>
+      "PID TTY          TIME CMD\n 1 pts/0    00:00:00 bash\n 2 pts/0    00:00:00 node",
+  },
+  mkdir: {
+    description: "Create new directory",
+    systemCalls: ["mkdir()", "chmod()"],
+    execute: (args) =>
+      args[1] ? `Directory '${args[1]}' created` : "Missing directory name",
+  },
+  touch: {
+    description: "Create an empty file",
+    systemCalls: ["open()", "write()"],
+    execute: (args) =>
+      args[1] ? `File '${args[1]}' created` : "Missing file name",
+  },
+  rm: {
+    description: "Remove a file",
+    systemCalls: ["unlink()"],
+    execute: (args) =>
+      args[1] ? `File '${args[1]}' removed` : "Missing file name",
+  },
+  cd: {
+    description: "Change directory",
+    systemCalls: ["chdir()", "getcwd()"],
+    execute: (args) =>
+      args[1] ? `Changed directory to '${args[1]}'` : "Missing directory name",
+  },
+  rmdir: {
+    description: "Remove a directory",
+    systemCalls: ["rmdir()"],
+    execute: (args) =>
+      args[1] ? `Directory '${args[1]}' removed` : "Missing directory name",
+  },
+  cat: {
+    description: "Concatenate and display file contents",
+    systemCalls: ["open()", "read()", "write()"],
+    execute: (args) =>
+      args[1] ? `Contents of file '${args[1]}'` : "Missing file name",
+  },
+  mv: {
+    description: "Move or rename a file",
+    systemCalls: ["rename()"],
+    execute: (args) =>
+      args[1] && args[2]
+        ? `Moved '${args[1]}' to '${args[2]}'`
+        : "Missing source or destination",
+  },
+  cp: {
+    description: "Copy a file",
+    systemCalls: ["open()", "read()", "write()"],
+    execute: (args) =>
+      args[1] && args[2]
+        ? `Copied '${args[1]}' to '${args[2]}'`
+        : "Missing source or destination",
+  },
+  uptime: {
+    description: "Show system uptime",
+    systemCalls: ["sysinfo()"],
+    execute: () => "System uptime: 1 day, 2 hours, 34 minutes",
+  },
+  free: {
+    description: "Show memory usage",
+    systemCalls: ["sysinfo()"],
+    execute: () =>
+      "              total        used        free      shared  buff/cache   available\nMem:        16384       8192       4096        512        4096       10240\nSwap:        8192       1024       7168",
+  },
+  ping: {
+    description: "Send ICMP echo request to a network host",
+    systemCalls: ["socket()", "sendto()", "recvfrom()"],
+    execute: (args) =>
+      args[1]
+        ? `Pinging ${args[1]}... Response received!`
+        : "Missing host address",
+  },
+  kill: {
+    description: "Terminate a process by PID",
+    systemCalls: ["kill()"],
+    execute: (args) =>
+      args[1] ? `Process ${args[1]} terminated` : "Missing process ID",
+  },
+  chmod: {
+    description: "Change file permissions",
+    systemCalls: ["chmod()"],
+    execute: (args) =>
+      args[1] && args[2]
+        ? `Permissions of '${args[2]}' changed to '${args[1]}'`
+        : "Missing mode or file name",
+  },
+  df: {
+    description: "Show disk space usage",
+    systemCalls: ["statvfs()"],
+    execute: () =>
+      "Filesystem      Size  Used Avail Use% Mounted on\n/dev/sda1        50G   20G   30G  40% /",
+  },
+  head: {
+    description: "Output the first part of a file",
+    systemCalls: ["open()", "read()"],
+    execute: (args) =>
+      args[1] ? `First 10 lines of '${args[1]}'` : "Missing file name",
+  },
+  tail: {
+    description: "Output the last part of a file",
+    systemCalls: ["open()", "read()"],
+    execute: (args) =>
+      args[1] ? `Last 10 lines of '${args[1]}'` : "Missing file name",
+  },
+  wc: {
+    description: "Count lines, words, and bytes in a file",
+    systemCalls: ["open()", "read()"],
+    execute: (args) =>
+      args[1]
+        ? `10 lines, 50 words, 200 bytes in '${args[1]}'`
+        : "Missing file name",
+  },
+  locate: {
+    description: "Find files by name",
+    systemCalls: ["read()"],
+    execute: (args) =>
+      args[1]
+        ? `Results for '${args[1]}': /path/to/${args[1]}`
+        : "Missing file name",
+  },
+  grep: {
+    description: "Search for a pattern in a file",
+    systemCalls: ["open()", "read()", "write()"],
+    execute: (args) =>
+      args[1] && args[2]
+        ? `Searching for '${args[1]}' in '${args[2]}'... Matches found!`
+        : "Missing pattern or file name",
+  },
+};
+
+type HistoryEntry = {
+  command: string;
+  output: string;
+  systemCalls: string[];
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const App: React.FC = () => {
+  const [input, setInput] = useState<string>("");
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [currentSystemCalls, setCurrentSystemCalls] = useState<string[]>([]);
+  const [currentCallIndex, setCurrentCallIndex] = useState<number>(-1);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (historyRef.current) {
+      historyRef.current.scrollTop = historyRef.current.scrollHeight;
+    }
+    inputRef.current?.focus();
+  }, [history]);
+
+  const processCommand = async (cmd: string) => {
+    const args = cmd.trim().split(" ");
+    const command = args[0].toLowerCase();
+
+    if (command === "") return;
+
+    setIsProcessing(true);
+    setCurrentCallIndex(-1);
+
+    let output = "";
+    let systemCalls: string[] = [];
+
+    const commandDef = commands[command];
+
+    if (command === "clear") {
+      setHistory([]);
+      systemCalls = commands.clear.systemCalls;
+    } else if (commandDef) {
+      systemCalls = commandDef.systemCalls;
+      output = commandDef.execute(args);
+    } else {
+      systemCalls = ["write()"];
+      output = `Command not found: ${command}`;
+    }
+
+    setCurrentSystemCalls(systemCalls);
+
+    for (let i = 0; i < systemCalls.length; i++) {
+      setCurrentCallIndex(i);
+      await sleep(300);
+    }
+    await sleep(500);
+
+    if (command !== "clear") {
+      setHistory((prev) => [...prev, { command: cmd, output, systemCalls }]);
+    }
+
+    setCurrentSystemCalls([]);
+    setCurrentCallIndex(-1);
+    setIsProcessing(false);
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!isProcessing && input.trim()) {
+      processCommand(input);
+      setInput("");
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="flex">
+      <div className="flex-1 p-4 font-mono text-sm overflow-hidden">
+        <div
+          ref={historyRef}
+          className="h-[400px] sm:h-[500px] overflow-y-auto space-y-2"
+        >
+          {history.map((entry, i) => (
+            <div key={i} className="space-y-1">
+              <div className="flex items-center">
+                <span className="text-green-400">$ </span>
+                <span className="ml-2">{entry.command}</span>
+              </div>
+              <div className="text-gray-300 whitespace-pre-wrap pl-4">
+                {entry.output}
+              </div>
+            </div>
+          ))}
+          <form onSubmit={handleSubmit} className="flex items-center">
+            <span className="text-green-400">$ </span>
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={isProcessing}
+              className="flex-1 ml-2 bg-transparent outline-none caret-green-400"
+              autoFocus
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </form>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      <div className="w-40 sm:w-64 border-l border-gray-700 p-4">
+        <div className="flex items-center mb-4 text-sm text-gray-400">
+          <Monitor className="w-4 h-4 mr-2" />
+          System Calls
+        </div>
+        <div className="font-mono text-xs space-y-1">
+          {currentSystemCalls.map((call, i) => (
+            <div
+              key={i}
+              className={`text-yellow-400 transition-opacity duration-200 ${
+                i <= currentCallIndex ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              {call}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default App;

@@ -6,7 +6,28 @@
   --background: #ffffff;
   --foreground: #171717;
 }
+::-webkit-scrollbar {
+  width: 8px; /* Adjust the width of the scrollbar */
+}
 
+::-webkit-scrollbar-track {
+  background: #1f2937; /* Dark background for the track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f2937; /* Dark gray scrollbar handle */
+  border-radius: 4px; /* Rounded corners for a modern look */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Slightly lighter gray on hover */
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin; /* Make the scrollbar thinner */
+  scrollbar-color: #333 #1a1a1a; /* Handle and track colors */
+}
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
