@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { SquareTerminal, Terminal } from "lucide-react";
+import { Terminal } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "XTerminal",
