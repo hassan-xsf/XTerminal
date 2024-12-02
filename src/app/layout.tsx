@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased font-mono">
+      <body className="antialiased font-mono h-screen">
         <div className="fixed inset-0 bg-gray-900 text-gray-100 p-4 md:p-8">
           <header className="text-center mb-8">
             <h1 className="text-4xl font-bold flex items-center justify-center gap-2">

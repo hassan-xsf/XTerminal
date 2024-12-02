@@ -267,8 +267,13 @@ const App: React.FC = () => {
       <div className="flex-1 p-4 font-mono text-sm overflow-hidden">
         <div
           ref={historyRef}
-          className="h-[400px] sm:h-[500px] overflow-y-auto space-y-2"
+          className="h-[40vh] sm:h-[50vh] overflow-y-auto space-y-2"
         >
+          <span>
+            <span className="text-green-400">&gt; </span>
+            Use 'help' to view all the xTerminal commands.
+          </span>
+
           {history.map((entry, i) => (
             <div key={i} className="space-y-1">
               <div className="flex items-center">
