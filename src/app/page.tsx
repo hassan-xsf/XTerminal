@@ -62,44 +62,50 @@ const commands: Record<string, Command> = {
     description: "Create new directory",
     systemCalls: ["mkdir()", "chmod()"],
     execute: (args) =>
-      args[1] ? `Directory '${args[1]}' created` : "Missing directory name",
+      args[1]
+        ? `Directory &apos;${args[1]}&apos; created`
+        : "Missing directory name",
   },
   touch: {
     description: "Create an empty file",
     systemCalls: ["open()", "write()"],
     execute: (args) =>
-      args[1] ? `File '${args[1]}' created` : "Missing file name",
+      args[1] ? `File &apos;${args[1]}&apos; created` : "Missing file name",
   },
   rm: {
     description: "Remove a file",
     systemCalls: ["unlink()"],
     execute: (args) =>
-      args[1] ? `File '${args[1]}' removed` : "Missing file name",
+      args[1] ? `File &apos;${args[1]}&apos; removed` : "Missing file name",
   },
   cd: {
     description: "Change directory",
     systemCalls: ["chdir()", "getcwd()"],
     execute: (args) =>
-      args[1] ? `Changed directory to '${args[1]}'` : "Missing directory name",
+      args[1]
+        ? `Changed directory to &apos;${args[1]}&apos;`
+        : "Missing directory name",
   },
   rmdir: {
     description: "Remove a directory",
     systemCalls: ["rmdir()"],
     execute: (args) =>
-      args[1] ? `Directory '${args[1]}' removed` : "Missing directory name",
+      args[1]
+        ? `Directory &apos;${args[1]}&apos; removed`
+        : "Missing directory name",
   },
   cat: {
     description: "Concatenate and display file contents",
     systemCalls: ["open()", "read()", "write()"],
     execute: (args) =>
-      args[1] ? `Contents of file '${args[1]}'` : "Missing file name",
+      args[1] ? `Contents of file &apos;${args[1]}&apos;` : "Missing file name",
   },
   mv: {
     description: "Move or rename a file",
     systemCalls: ["rename()"],
     execute: (args) =>
       args[1] && args[2]
-        ? `Moved '${args[1]}' to '${args[2]}'`
+        ? `Moved &apos;${args[1]}&apos; to &apos;${args[2]}&apos;`
         : "Missing source or destination",
   },
   cp: {
@@ -107,7 +113,7 @@ const commands: Record<string, Command> = {
     systemCalls: ["open()", "read()", "write()"],
     execute: (args) =>
       args[1] && args[2]
-        ? `Copied '${args[1]}' to '${args[2]}'`
+        ? `Copied &apos;${args[1]}&apos; to &apos;${args[2]}&apos;`
         : "Missing source or destination",
   },
   uptime: {
@@ -140,7 +146,7 @@ const commands: Record<string, Command> = {
     systemCalls: ["chmod()"],
     execute: (args) =>
       args[1] && args[2]
-        ? `Permissions of '${args[2]}' changed to '${args[1]}'`
+        ? `Permissions of &apos;${args[2]}&apos; changed to &apos;${args[1]}&apos;`
         : "Missing mode or file name",
   },
   df: {
@@ -153,20 +159,22 @@ const commands: Record<string, Command> = {
     description: "Output the first part of a file",
     systemCalls: ["open()", "read()"],
     execute: (args) =>
-      args[1] ? `First 10 lines of '${args[1]}'` : "Missing file name",
+      args[1]
+        ? `First 10 lines of &apos;${args[1]}&apos;`
+        : "Missing file name",
   },
   tail: {
     description: "Output the last part of a file",
     systemCalls: ["open()", "read()"],
     execute: (args) =>
-      args[1] ? `Last 10 lines of '${args[1]}'` : "Missing file name",
+      args[1] ? `Last 10 lines of &apos;${args[1]}&apos;` : "Missing file name",
   },
   wc: {
     description: "Count lines, words, and bytes in a file",
     systemCalls: ["open()", "read()"],
     execute: (args) =>
       args[1]
-        ? `10 lines, 50 words, 200 bytes in '${args[1]}'`
+        ? `10 lines, 50 words, 200 bytes in &apos;${args[1]}&apos;`
         : "Missing file name",
   },
   locate: {
@@ -174,7 +182,7 @@ const commands: Record<string, Command> = {
     systemCalls: ["read()"],
     execute: (args) =>
       args[1]
-        ? `Results for '${args[1]}': /path/to/${args[1]}`
+        ? `Results for &apos;${args[1]}&apos;: /path/to/${args[1]}`
         : "Missing file name",
   },
   grep: {
@@ -182,7 +190,7 @@ const commands: Record<string, Command> = {
     systemCalls: ["open()", "read()", "write()"],
     execute: (args) =>
       args[1] && args[2]
-        ? `Searching for '${args[1]}' in '${args[2]}'... Matches found!`
+        ? `Searching for &apos;${args[1]}&apos; in &apos;${args[2]}&apos;... Matches found!`
         : "Missing pattern or file name",
   },
 };
@@ -271,7 +279,7 @@ const App: React.FC = () => {
         >
           <span>
             <span className="text-green-400">&gt; </span>
-            Use 'help' to view all the xTerminal commands.
+            Use &apos;help&apos; to view all the xTerminal commands.
           </span>
 
           {history.map((entry, i) => (
